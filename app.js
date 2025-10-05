@@ -6,8 +6,14 @@ function showPage(pageName) {
     document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.classList.remove('active');
     });
-    event.target.classList.add('active');
-    
+    // Remove all 'active' classes
+ document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.classList.remove('active');
+ });
+
+ // Add 'active' to the correct button
+ document.querySelector(`.nav-btn[onclick*="${pageName}"]`).classList.add('active');
+
     // Load different pages
     switch(pageName) {
         case 'assistant':
