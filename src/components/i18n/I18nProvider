@@ -1,0 +1,172 @@
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { User } from '@/entities/all';
+
+const en = {
+  "appName": "Bondly",
+  "welcomeTo": "Welcome to",
+  "welcomeTagline": "Nurture your connection, one message at a time.",
+  "getStarted": "Get Started",
+  "termsAgreement": "By continuing, you agree to our Terms of Service and Privacy Policy.",
+  "assistant": "Assistant",
+  "insights": "Insights",
+  "settings": "Settings",
+  "aiReplyAssistant": "AI Relationship Coach",
+  "tagline": "Strengthen your bond with thoughtful, high-EQ replies. ✨",
+  "strugglingMessage": "What message needs a thoughtful reply?",
+  "messagePlaceholder": "Paste your partner's message here... Let's build a better connection together. ❤️",
+  "getHelpButton": "Craft Reply",
+  "gettingResponses": "Crafting your replies...",
+  "chooseVibe": "Choose your communication style:",
+  "messageToReply": "Replying to:",
+  "imageAttached": "Image attached for context.",
+  "back": "Back",
+  "generateResponses": "Generate Replies",
+  "craftingResponses": "Connecting with empathy...",
+  "situationAnalysis": "Emotional Context",
+  "responseOptions": "Your reply options:",
+  "whyThisWorks": "Why it connects:",
+  "consider": "Gently consider:",
+  "goldenTip": "Relationship Tip",
+  "helpAnother": "Help with another message",
+  "dashboardTitle": "Your Connection Insights",
+  "dashboardSubtitle": "Track your communication health and growth.",
+  "totalHelps": "Assisted Conversations",
+  "positiveInteractions": "Positive Interactions",
+  "favoriteTone": "Favorite Style",
+  "recentConversations": "Recent Conversations",
+  "noConversations": "No conversations yet!",
+  "noConversationsDesc": "Start using the coach to see your insights.",
+  "settingsTitle": "Settings",
+  "settingsSubtitle": "Personalize your Bondly experience",
+  "profile": "Profile",
+  "preferences": "Preferences",
+  "pushNotifications": "Push Notifications",
+  "pushNotificationsDesc": "Get notified about new features",
+  "smartSuggestions": "Smart Suggestions",
+  "smartSuggestionsDesc": "AI learns from your preferences",
+  "yourFavoriteTone": "Your Go-To Style",
+  "notSet": "Not set",
+  "privacySecurity": "Privacy & Security",
+  "privacyDesc": "Your conversations are private, encrypted, and never shared. We're here to support your relationship, not mine your data.",
+  "privacyPolicy": "Privacy Policy",
+  "termsOfService": "Terms of Service",
+  "signOut": "Sign Out",
+  "language": "Language",
+  "languageDesc": "Choose your preferred language",
+  "loading": "Loading..."
+};
+
+const vi = {
+  "appName": "Bondly",
+  "welcomeTo": "Chào mừng đến với",
+  "welcomeTagline": "Nuôi dưỡng kết nối của bạn, qua từng tin nhắn.",
+  "getStarted": "Bắt đầu",
+  "termsAgreement": "Bằng việc tiếp tục, bạn đồng ý với Điều khoản Dịch vụ và Chính sách Bảo mật của chúng tôi.",
+  "assistant": "Trợ lý",
+  "insights": "Thống kê",
+  "settings": "Cài đặt",
+  "aiReplyAssistant": "Chuyên gia Tình cảm AI",
+  "tagline": "Gắn kết tình cảm bằng những câu trả lời sâu sắc, tinh tế. ✨",
+  "strugglingMessage": "Tin nhắn nào cần một câu trả lời thấu đáo?",
+  "messagePlaceholder": "Dán tin nhắn của đối phương vào đây... Cùng nhau xây dựng một kết nối tốt đẹp hơn. ❤️",
+  "getHelpButton": "Tạo câu trả lời",
+  "gettingResponses": "Đang soạn câu trả lời...",
+  "chooseVibe": "Chọn phong cách giao tiếp:",
+  "messageToReply": "Trả lời tin nhắn:",
+  "imageAttached": "Đã đính kèm hình ảnh.",
+  "back": "Quay lại",
+  "generateResponses": "Tạo câu trả lời",
+  "craftingResponses": "Đang kết nối với sự đồng cảm...",
+  "situationAnalysis": "Bối cảnh cảm xúc",
+  "responseOptions": "Các lựa chọn trả lời của bạn:",
+  "whyThisWorks": "Tại sao lại kết nối:",
+  "consider": "Cân nhắc nhẹ nhàng:",
+  "goldenTip": "Mẹo Tình yêu",
+  "helpAnother": "Giúp với tin nhắn khác",
+  "dashboardTitle": "Thông tin Kết nối của bạn",
+  "dashboardSubtitle": "Theo dõi sức khỏe và sự phát triển trong giao tiếp.",
+  "totalHelps": "Cuộc trò chuyện được hỗ trợ",
+  "positiveInteractions": "Tương tác tích cực",
+  "favoriteTone": "Phong cách yêu thích",
+  "recentConversations": "Cuộc trò chuyện gần đây",
+  "noConversations": "Chưa có cuộc trò chuyện nào!",
+  "noConversationsDesc": "Bắt đầu sử dụng chuyên gia để xem thông tin chi tiết.",
+  "settingsTitle": "Cài đặt",
+  "settingsSubtitle": "Cá nhân hóa trải nghiệm Bondly của bạn",
+  "profile": "Hồ sơ",
+  "preferences": "Tùy chọn",
+  "pushNotifications": "Thông báo đẩy",
+  "pushNotificationsDesc": "Nhận thông báo về các tính năng mới",
+  "smartSuggestions": "Gợi ý thông minh",
+  "smartSuggestionsDesc": "AI học hỏi từ sở thích của bạn",
+  "yourFavoriteTone": "Phong cách quen thuộc",
+  "notSet": "Chưa đặt",
+  "privacySecurity": "Quyền riêng tư & Bảo mật",
+  "privacyDesc": "Các cuộc trò chuyện của bạn là riêng tư, được mã hóa và không bao giờ chia sẻ. Chúng tôi ở đây để hỗ trợ mối quan hệ của bạn, không phải để khai thác dữ liệu.",
+  "privacyPolicy": "Chính sách bảo mật",
+  "termsOfService": "Điều khoản dịch vụ",
+  "signOut": "Đăng xuất",
+  "language": "Ngôn ngữ",
+  "languageDesc": "Chọn ngôn ngữ bạn muốn dùng",
+  "loading": "Đang tải..."
+};
+
+
+const translations = { en, vi };
+
+const I18nContext = createContext();
+
+export const I18nProvider = ({ children }) => {
+    const [language, setLanguage] = useState('en');
+    const [user, setUser] = useState(null);
+    const [userLoaded, setUserLoaded] = useState(false);
+
+    useEffect(() => {
+        const fetchUserAndLanguage = async () => {
+            try {
+                const currentUser = await User.me();
+                setUser(currentUser);
+                if (currentUser && currentUser.language && translations[currentUser.language]) {
+                    setLanguage(currentUser.language);
+                }
+            } catch (error) {
+                console.warn("User not logged in or session expired.");
+            } finally {
+                setUserLoaded(true);
+            }
+        };
+        fetchUserAndLanguage();
+    }, []);
+
+    const changeLanguage = useCallback(async (lang) => {
+        if (translations[lang]) {
+            setLanguage(lang);
+            try {
+                // Optimistically update UI, then save to backend
+                await User.updateMyUserData({ language: lang });
+                // Also update the local user object to be in sync
+                setUser(prevUser => prevUser ? {...prevUser, language: lang} : null);
+            } catch (error) {
+                console.error("Could not save user language preference:", error);
+            }
+        }
+    }, []);
+
+    const t = useCallback((key, params = {}) => {
+        let translation = translations[language]?.[key] || key;
+        Object.keys(params).forEach(paramKey => {
+            translation = translation.replace(`{${paramKey}}`, params[paramKey]);
+        });
+        return translation;
+    }, [language]);
+    
+    const value = { t, language, changeLanguage, user, userLoaded };
+
+    return (
+        <I18nContext.Provider value={value}>
+            {children}
+        </I18nContext.Provider>
+    );
+};
+
+export const useI18n = () => useContext(I18nContext);

@@ -1,0 +1,218 @@
+import React, { useState, useEffect } from "react";
+import { InvokeLLM, UploadFile } from "@/integrations/Core";
+import { ConversationHelp, User } from "@/entities/all";
+import { motion, AnimatePresence } from "framer-motion";
+
+import MessageInput from "../components/assistant/MessageInput";
+import ToneSelector from "../components/assistant/ToneSelector";
+import ResponseCards from "../components/assistant/ResponseCards";
+import { useI18n } from '../components/i18n/I18nProvider';
+
+export default function Assistant() {
+  const { t, language } = useI18n();
+  const [currentStep, setCurrentStep] = useState("input"); // input, tone-selection, results
+  const [originalMessage, setOriginalMessage] = useState("");
+  const [messageImage, setMessageImage] = useState(null);
+  const [selectedTone, setSelectedTone] = useState("empathetic");
+  const [isLoading, setIsLoading] = useState(false);
+  const [aiResponse, setAiResponse] = useState(null);
+
+  const handleGetHelp = (message, image) => {
+    setOriginalMessage(message);
+    setMessageImage(image);
+    setCurrentStep("tone-selection");
+  };
+
+  const handleGenerateResponses = async () => {
+    setIsLoading(true);
+    setCurrentStep("results");
+    
+    let fileUrl = null;
+    try {
+        if (messageImage) {
+            const uploadResult = await UploadFile({ file: messageImage });
+            fileUrl = uploadResult.file_url;
+        }
+
+      const langInstruction = language === 'vi' ? 'Please respond in Vietnamese.' : 'Please respond in English.';
+      const masterPrompt = `You are "Bondly", an expert relationship coach with the empathy of a therapist and the wisdom of a long-married partner. Your goal is to help users improve their communication with their significant other, fostering connection and de-escalating conflict.
+
+The user needs help replying to a message.
+Their partner said: "${originalMessage}"
+The user wants to reply with an **${selectedTone}** tone.
+${fileUrl ? `An image has been provided for full context.` : ''}
+
+**Your Task:**
+1.  **Analyze the emotion and intent** behind the partner's message.
+2.  Provide a JSON response containing:
+    - **situation_analysis**: (1-2 sentences analyzing the emotional context of the conversation from a high-EQ perspective).
+    - **suggestions**: An array of 3 distinct, high-EQ response options. Each option should have:
+        - **response**: (A short, natural, and constructive text message reply).
+        - **tone**: (The specific sub-tone, e.g., "reassuring," "validating," "playful," "clarifying").
+        - **pros**: (Array of 2-3 reasons why this response builds connection or de-escalates).
+        - **cons**: (Array of 1-2 potential risks or considerations).
+    - **golden_tip**: (One piece of actionable, long-term advice for healthy communication in a relationship, related to this specific situation).
+
+${langInstruction}
+
+**Constraints**:
+- All outputs must be constructive and relationship-building.
+- Avoid clichés. Provide authentic, modern communication strategies.
+- Keep responses concise and natural for texting.`;
+
+      const response = await InvokeLLM({
+        prompt: masterPrompt,
+        file_urls: fileUrl ? [fileUrl] : null,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            situation_analysis: { type: "string" },
+            suggestions: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  response: { type: "string" },
+                  tone: { type: "string" },
+                  pros: { type: "array", items: { type: "string" } },
+                  cons: { type: "array", items: { type: "string" } }
+                }
+              }
+            },
+            golden_tip: { type: "string" }
+          }
+        }
+      });
+
+      setAiResponse(response);
+
+      await ConversationHelp.create({
+        original_message: originalMessage,
+        situation_analysis: response.situation_analysis,
+        selected_tone: selectedTone,
+        ai_suggestions: response.suggestions,
+        golden_tip: response.golden_tip,
+      });
+
+    } catch (error) {
+      console.error("Error generating responses:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleStartOver = () => {
+    setCurrentStep("input");
+    setOriginalMessage("");
+    setMessageImage(null);
+    setAiResponse(null);
+  };
+
+  const handleCopyResponse = (response) => {
+    console.log("Copied:", response);
+  };
+
+  const handleFeedback = (suggestion, type) => {
+    console.log("Feedback:", suggestion, type);
+  };
+
+  return (
+    <div className="py-6 space-y-6">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-center space-y-2"
+      >
+        <h1 className="text-2xl font-bold gradient-text">{t('aiReplyAssistant')}</h1>
+        <p className="text-gray-600">{t('tagline')}</p>
+      </motion.div>
+
+      <AnimatePresence mode="wait">
+        {currentStep === "input" && (
+          <MessageInput 
+            onGetHelp={handleGetHelp}
+            isLoading={isLoading}
+          />
+        )}
+
+        {currentStep === "tone-selection" && (
+          <motion.div
+            key="tone-selection"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="space-y-6"
+          >
+            <div className="p-4 bg-gray-50 rounded-xl space-y-2">
+              <h3 className="text-sm font-medium text-gray-700 mb-2">{t('messageToReply')}</h3>
+              <p className="text-gray-900 italic">"{originalMessage}"</p>
+              {messageImage && (
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                      <img src={URL.createObjectURL(messageImage)} alt="Message context" className="w-16 h-16 object-cover rounded-md border" />
+                      <span>{t('imageAttached')}</span>
+                  </div>
+              )}
+            </div>
+
+            <ToneSelector
+              selectedTone={selectedTone}
+              onToneChange={setSelectedTone}
+            />
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setCurrentStep("input")}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+              >
+                {t('back')}
+              </button>
+              <button
+                onClick={handleGenerateResponses}
+                disabled={isLoading}
+                className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white py-3 rounded-xl font-medium transition-all"
+              >
+                {t('generateResponses')}
+              </button>
+            </div>
+          </motion.div>
+        )}
+
+        {currentStep === "results" && (
+          <motion.div
+            key="results"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="space-y-6"
+          >
+            {isLoading ? (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 border-4 border-orange-200 border-t-orange-500 rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-gray-600">{t('craftingResponses')}</p>
+              </div>
+            ) : aiResponse ? (
+              <>
+                <ResponseCards
+                  suggestions={aiResponse.suggestions}
+                  situationAnalysis={aiResponse.situation_analysis}
+                  goldenTip={aiResponse.golden_tip}
+                  onCopyResponse={handleCopyResponse}
+                  onFeedback={handleFeedback}
+                />
+                
+                <div className="text-center">
+                  <button
+                    onClick={handleStartOver}
+                    className="px-6 py-2 text-orange-600 hover:text-orange-700 font-medium transition-colors"
+                  >
+                    {t('helpAnother')}
+                  </button>
+                </div>
+              </>
+            ) : null}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}

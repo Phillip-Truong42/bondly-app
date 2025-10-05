@@ -1,0 +1,70 @@
+{
+  "name": "ConversationHelp",
+  "type": "object",
+  "properties": {
+    "original_message": {
+      "type": "string",
+      "description": "The message user needs help responding to"
+    },
+    "situation_analysis": {
+      "type": "string",
+      "description": "AI analysis of the conversation situation"
+    },
+    "selected_tone": {
+      "type": "string",
+      "enum": [
+        "witty",
+        "direct",
+        "curious",
+        "flirty"
+      ],
+      "description": "Tone selected by user"
+    },
+    "ai_suggestions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "response": {
+            "type": "string"
+          },
+          "tone": {
+            "type": "string"
+          },
+          "pros": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "cons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "golden_tip": {
+      "type": "string",
+      "description": "Practical long-term dating advice"
+    },
+    "used_premium": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this used a premium feature"
+    }
+  },
+  "required": [
+    "original_message"
+  ],
+  "rls": {
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "write": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}

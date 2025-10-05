@@ -1,0 +1,27 @@
+{
+  "name": "UsageCounter",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of usage tracking"
+    },
+    "free_uses_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of free AI replies used today"
+    }
+  },
+  "required": [
+    "date"
+  ],
+  "rls": {
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "write": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}

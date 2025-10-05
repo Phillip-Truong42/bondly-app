@@ -1,0 +1,62 @@
+import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Globe, Check } from 'lucide-react';
+import { useI18n } from './I18nProvider';
+
+export default function LanguageSetupModal({ isOpen, onClose }) {
+    const { changeLanguage } = useI18n();
+
+    const handleSelect = (lang) => {
+        changeLanguage(lang);
+        onClose();
+    };
+
+    return (
+        <AnimatePresence>
+            {isOpen && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
+                >
+                    <motion.div
+                        initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 30, scale: 0.95 }}
+                    >
+                        <Card className="w-full max-w-sm">
+                            <CardHeader className="text-center">
+                                <Globe className="mx-auto w-12 h-12 text-orange-500 mb-2" />
+                                <CardTitle className="text-2xl font-bold gradient-text">
+                                    Choose Your Language
+                                </CardTitle>
+                                <p className="text-gray-500">Select your preferred language to start.</p>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <Button
+                                    onClick={() => handleSelect('en')}
+                                    className="w-full h-12 text-lg"
+                                    variant="outline"
+                                >
+                                    <Check className="w-5 h-5 mr-2" />
+                                    English
+                                </Button>
+                                <Button
+                                    onClick={() => handleSelect('vi')}
+                                    className="w-full h-12 text-lg"
+                                    variant="outline"
+                                >
+                                    <Check className="w-5 h-5 mr-2" />
+                                    Tiếng Việt
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    </motion.div>
+                </motion.div>
+            )}
+        </AnimatePresence>
+    );
+}

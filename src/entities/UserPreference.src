@@ -1,0 +1,37 @@
+{
+  "name": "UserPreference",
+  "type": "object",
+  "properties": {
+    "preferred_tone": {
+      "type": "string",
+      "enum": [
+        "witty",
+        "direct",
+        "curious",
+        "flirty"
+      ],
+      "default": "witty",
+      "description": "User's preferred response tone"
+    },
+    "writing_style_notes": {
+      "type": "string",
+      "description": "AI observations about user's writing style"
+    },
+    "personality_traits": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Identified personality traits from past interactions"
+    }
+  },
+  "required": [],
+  "rls": {
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "write": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}
